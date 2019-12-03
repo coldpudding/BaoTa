@@ -227,8 +227,31 @@ class panelSite(panelRedirect):
         if not os.path.exists(urlrewritePath): os.makedirs(urlrewritePath);
         open(urlrewriteFile,'w+').close();
         return True;
-    
-     
+
+    def initDefaultSiteFiles(self):
+        #创建basedir
+        self.DelUserInI(self.sitePath);
+        userIni = self.sitePath+'/.user.ini';
+        if not os.path.exists(userIni):
+            public.writeFile(userIni, 'open_basedir='+self.sitePath+'/:/tmp/:/proc/');
+            public.ExecShell('chmod 644 ' + userIni);
+            public.ExecShell('chown root:root ' + userIni);
+            public.ExecShell('chattr +i '+userIni);
+
+        #创建默认文档
+        index = self.sitePath+'/index.html'
+        if not os.path.exists(index):
+            public.writeFile(index, public.readFile('data/defaultDoc.html'))
+            public.ExecShell('chmod -R 755 ' + index);
+            public.ExecShell('chown -R www:www ' + index);
+
+        #创建自定义404页
+        doc404 = self.sitePath+'/404.html'
+        if not os.path.exists(doc404):
+            public.writeFile(doc404, public.readFile('data/404.html'));
+            public.ExecShell('chmod -R 755 ' + doc404);
+            public.ExecShell('chown -R www:www ' + doc404);
+
     #添加站点
     def AddSite(self,get):
         self.check_default()
@@ -273,8 +296,18 @@ class panelSite(panelRedirect):
         if self.siteName.find('*') != -1: return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN_TOW');
         
         if not domain: domain = self.siteName;
-    
-        
+
+        #创建根目录
+        if not os.path.exists(self.sitePath): 
+            try:
+                os.makedirs(self.sitePath)
+            except Exception as ex:
+                return public.returnMsg(False,'创建根目录失败, %s' % ex)
+            public.ExecShell('chmod -R 755 ' + self.sitePath);
+            public.ExecShell('chown -R www:www ' + self.sitePath);
+
+        self.initDefaultSiteFiles()
+
         #是否重复
         sql = public.M('sites');
         if sql.where("name=?",(self.siteName,)).count(): return public.returnMsg(False,'SITE_ADD_ERR_EXISTS');
@@ -287,38 +320,6 @@ class panelSite(panelRedirect):
 
         if public.M('binding').where('domain=?',(self.siteName,)).count():
             return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN_EXISTS');
-        
-        #创建根目录
-        if not os.path.exists(self.sitePath): 
-            try:
-                os.makedirs(self.sitePath)
-            except Exception as ex:
-                return public.returnMsg(False,'创建根目录失败, %s' % ex)
-            public.ExecShell('chmod -R 755 ' + self.sitePath);
-            public.ExecShell('chown -R www:www ' + self.sitePath);
-        
-        #创建basedir
-        self.DelUserInI(self.sitePath);
-        userIni = self.sitePath+'/.user.ini';
-        if not os.path.exists(userIni):
-            public.writeFile(userIni, 'open_basedir='+self.sitePath+'/:/tmp/:/proc/');
-            public.ExecShell('chmod 644 ' + userIni);
-            public.ExecShell('chown root:root ' + userIni);
-            public.ExecShell('chattr +i '+userIni);
-        
-        #创建默认文档
-        index = self.sitePath+'/index.html'
-        if not os.path.exists(index):
-            public.writeFile(index, public.readFile('data/defaultDoc.html'))
-            public.ExecShell('chmod -R 755 ' + index);
-            public.ExecShell('chown -R www:www ' + index);
-        
-        #创建自定义404页
-        doc404 = self.sitePath+'/404.html'
-        if not os.path.exists(doc404):
-            public.writeFile(doc404, public.readFile('data/404.html'));
-            public.ExecShell('chmod -R 755 ' + doc404);
-            public.ExecShell('chown -R www:www ' + doc404);
         
         #写入配置
         result = self.nginxAdd()

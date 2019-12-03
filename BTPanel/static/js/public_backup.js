@@ -5106,7 +5106,6 @@ bt.data = {
 								{name:'ftp_password',title:'密码',width:'173px',value:bt.get_random(16)}
 							],ps:'创建站点的同时，为站点创建一个对应FTP帐户，并且FTP目录指向站点所在目录。'}
 							var _tr = bt.render_form_line(item)
-				
 							obj.parents('div.line').append('<div class="line" id='+subid+'>'+_tr.html+'</div>');
 						}
 					}}
@@ -5146,7 +5145,7 @@ bt.data = {
 				{title:'程序类型',type:'select',name:'type',disabled:(bt.contains( bt.get_cookie('serverType'),'IIS')?false:true),items:[
 					{value:'PHP',title:'PHP'},
 					{value:'Asp',title:'Asp'},
-					{value:'Aspx',title:'Aspx'},					
+					{value:'Aspx',title:'Aspx'},
 				],callback:function(obj){
 					if(obj.val()=='Asp' || obj.val()=='Aspx'){
 						obj.parents('div.line').next().hide();
@@ -5157,11 +5156,24 @@ bt.data = {
 				{title:'PHP版本',name:'version',type:'select',items:[
 					{value:'00',title:'纯静态'}
                 ]
-                }, {
-                    title: '网站分类', name: 'type_id', type: 'select', items: [
-                        
-                    ]
-                }
+				}, {
+					title: '初始化类型', items: [{
+						name: 'init_type', type: 'select', items: [
+							{ value: 'default', title: '默认' },
+							{ value: 'git', title: 'Git' },
+						], callback: function(obj) {
+							var subid = obj.attr('name')+'_subid';
+							$('#'+subid).remove();
+							if(obj.val()=='git'){
+								var item = { title:'Git地址', name: 'git_address', type: 'input' }
+								var _tr = bt.render_form_line(item)
+								obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
+							}
+						}
+					}]
+				}, {
+				title: '网站分类', name: 'type_id', type: 'select', items: [],
+		}
 			],
 			btns:[
 				{title:'关闭',name:'close'},
